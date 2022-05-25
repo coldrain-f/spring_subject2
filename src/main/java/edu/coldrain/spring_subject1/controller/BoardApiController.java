@@ -59,7 +59,7 @@ public class BoardApiController {
     public ResponseEntity<CreateBoardResponse> createBoard(@RequestBody CreateBoardRequest request) {
         Board board = new Board(request.getTitle(), request.getAuthor(), request.password, request.contents);
         Long id = boardService.registerBoard(board);
-        return ResponseEntity.ok(new CreateBoardResponse(id)); // 오버 스펙
+        return ResponseEntity.ok(new CreateBoardResponse(id));
     }
 
     /**
