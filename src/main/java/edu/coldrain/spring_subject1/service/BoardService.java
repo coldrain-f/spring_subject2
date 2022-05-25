@@ -75,11 +75,9 @@ public class BoardService {
     @Transactional
     public boolean removeBoard(Long id, Board request) throws IllegalArgumentException {
         Optional<Board> board = boardRepository.findById(id);
-        if (board.isPresent()) {
-            if (isSamePassword(board.get().getPassword(), request.getPassword())) {
-                boardRepository.delete(board.get());
-                return true;
-            }
+        if (board.isPresent() && isSamePassword(board.get().getPassword(), request.getPassword())) {
+            boardRepository.delete(board.get());
+            return true;
         }
         return false;
     }

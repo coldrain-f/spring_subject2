@@ -59,7 +59,7 @@ public class BoardApiController {
     public ResponseEntity<CreateBoardResponse> createBoard(@RequestBody CreateBoardRequest request) {
         Board board = new Board(request.getTitle(), request.getAuthor(), request.password, request.contents);
         Long id = boardService.registerBoard(board);
-        return ResponseEntity.ok(new CreateBoardResponse(id));
+        return ResponseEntity.ok(new CreateBoardResponse(id)); // 오버 스펙
     }
 
     /**
@@ -70,6 +70,7 @@ public class BoardApiController {
     public ResponseEntity<String> modifyBoard(
             @PathVariable Long id,
             @RequestBody UpdateBoardRequest request) {
+
         Board board = new Board(request.getTitle(), request.getAuthor(), request.getPassword(), request.getContents());
         boolean isUpdate = boardService.modifyBoard(id, board);
         if (isUpdate) {

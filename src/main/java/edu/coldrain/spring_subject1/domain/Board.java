@@ -32,7 +32,4 @@ public class Board extends Timestamped {
         this.contents = contents;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return super.getCreatedAt();
-    }
 }
