@@ -38,7 +38,7 @@ public class BoardService {
      * 게시글 등록 기능
      */
     @Transactional
-    public Long registerBoard(Board board) {
+    public Long write(Board board) {
         boardRepository.save(board);
         return board.getId();
     }

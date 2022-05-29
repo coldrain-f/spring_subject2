@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,11 +61,17 @@ public class BoardApiController {
      * 제목, 작성자명, 비밀번호, 작성 내용을 입력하기
      */
     @PostMapping("/api/boards")
-    public ResponseEntity<CreateBoardResponse> create(@RequestBody CreateBoardRequest request) {
-        // TODO: 2022-05-29 전체적으로 점검 예정
-        Board board = new Board(request.getTitle(), request.getAuthor(), request.password, request.contents);
-        Long id = boardService.registerBoard(board);
-        return ResponseEntity.ok(new CreateBoardResponse(id));
+    public ResponseEntity<String> create(@RequestBody BoardCreateRequestDTO requestDTO) {
+        Board board = Board.builder()
+                .title(requestDTO.getTitle())
+                .author(requestDTO.getAuthor())
+                .password(requestDTO.getPassword())
+                .contents(requestDTO.getContents())
+                .build();
+        boardService.write(board);
+
+        String location = "/api/boards/" + board.getId();
+        return ResponseEntity.created(URI.create(location)).build();
     }
 
     /**
@@ -72,12 +79,12 @@ public class BoardApiController {
      * API 를 호출할 때 입력된 비밀번호를 비교하여 동일할 때만 글이 수정되게 하기
      */
     @PatchMapping("/api/boards/{id}")
-    public ResponseEntity<String> modify(@PathVariable Long id, @RequestBody ModifyBoardRequest request) {
+    public ResponseEntity<String> modify(@PathVariable Long id, @RequestBody BoardModifyRequestDTO requestDTO) {
         Board newBoard = Board.builder()
-                .title(request.getTitle())
-                .author(request.getAuthor())
-                .password(request.getPassword())
-                .contents(request.getContents())
+                .title(requestDTO.getTitle())
+                .author(requestDTO.getAuthor())
+                .password(requestDTO.getPassword())
+                .contents(requestDTO.getContents())
                 .build();
 
         Board board = boardService.findOne(id) // 1차 캐시에 있음.
@@ -109,12 +116,7 @@ public class BoardApiController {
     }
 
     @Data
-    static class RemoveBoardRequest {
-        private String password;
-    }
-
-    @Data
-    static class CreateBoardRequest {
+    static class BoardCreateRequestDTO {
         private String title;
         private String author;
         private String password;
@@ -122,18 +124,14 @@ public class BoardApiController {
     }
 
     @Data
-    static class CreateBoardResponse {
-        private final Long id;
-    }
-
-    @Data
-    static class ModifyBoardRequest {
+    static class BoardModifyRequestDTO {
         private String title;
         private String author;
         private String password;
         private String contents;
     }
 
+    // TODO: 2022-05-29 클래스명 변경 예정 
     @Data
     static class SelectBoardListResponse {
         private final String title;
