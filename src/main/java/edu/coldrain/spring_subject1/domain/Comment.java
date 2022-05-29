@@ -31,8 +31,7 @@ public class Comment extends Timestamped {
         this.board = board;
     }
 
-    public void modify(String author, String content) {
-        this.author = author;
+    public void modify(String content) {
         this.content = content;
     }
 }
