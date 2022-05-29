@@ -1,9 +1,14 @@
 spring:
   datasource:
-    url: jdbc:mysql://springboot-db.cwxzgpfpc78w.ap-northeast-2.rds.amazonaws.com:3306/myselectshop
-    username: admin
-    password: qhanftja1!
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  #    url: jdbc:mysql://springboot-db.cwxzgpfpc78w.ap-northeast-2.rds.amazonaws.com:3306/myselectshop
+#    username: admin
+#    password: qhanftja1!
+#    driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa: # 이러한 설정들은 스프링 부트 공식 메뉴얼에서 찾아보면 된다.
     hibernate:
@@ -13,8 +18,15 @@ spring:
       hibernate:
         #        show_sql: true # System.out 으로 SQL 출력
         format_sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+    defer-datasource-initialization: true # DDL 실행 후 data.sql 실행
 
 logging:
   level:
     org.hibernate.SQL: debug # JPA 나 Hibernate 가 생성하는 SQL 로그를 남긴다. ( log 로 출력 )
     org.hibernate.type: trace # 쿼리 파라미터 출력 ( SQL 에서 '?'로 뜨는것이 값이 뜨도록 설정 )
+
+jwt:
+  header: Authorization
+  secret: c2lsdmVybmluZS10ZWNoLXNwcmluZy1ib290LWp3dC10dXRvcmlhbC1zZWNyZXQtc2lsdmVybmluZS10ZWNoLXNwcmluZy1ib290LWp3dC10dXRvcmlhbC1zZWNyZXQK
+  token-validity-in-seconds: 86400
