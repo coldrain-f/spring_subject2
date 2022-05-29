@@ -3,7 +3,6 @@ package edu.coldrain.spring_subject1.domain;
 import lombok.*;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Getter @Setter
