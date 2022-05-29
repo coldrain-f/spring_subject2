@@ -21,7 +21,6 @@ public class CommentApiController {
     private final CommentService commentService;
     private final BoardService boardService;
 
-    // 댓글 목록 조회
     @GetMapping("/api/boards/{id}/comments")
     public ResponseEntity<List<ListCommentResponseDTO>> viewComments(@PathVariable Long id) {
         // TODO: 2022-05-29 로그인 토큰을 전달하지 않아도 댓글 목록 조회가 가능하도록 하기

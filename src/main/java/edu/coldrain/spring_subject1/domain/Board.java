@@ -23,11 +23,17 @@ public class Board extends Timestamped {
     @Lob
     private String contents;
 
+    @Builder
     public Board(String title, String author, String password, String contents) {
         super();
         this.title = title;
         this.author = author;
         this.password = password;
+        this.contents = contents;
+    }
+
+    public void modify(String title, String contents) {
+        this.title = title;
         this.contents = contents;
     }
 
