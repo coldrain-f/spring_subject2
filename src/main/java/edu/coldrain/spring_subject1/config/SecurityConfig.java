@@ -80,6 +80,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/authenticate").permitAll()
                 .antMatchers("/api/signup").permitAll()
 
+                // TODO: 2022-05-29 테스트를 위해서 임시적으로 모든 API 권한을 풀어둠. ( 삭제 예정 )
+                .antMatchers("/api/**").permitAll()
+
                 .anyRequest().authenticated()
 
                 .and()

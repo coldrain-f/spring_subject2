@@ -46,6 +46,7 @@ public class BoardApiController {
     @GetMapping("/api/boards/{id}")
     public ResponseEntity<SelectBoardResponse> viewDetail(@PathVariable Long id) {
         // TODO: 2022-05-29 전체적으로 점검 예정
+        // TODO: 2022-05-29 해당하는 글이 없으면 404 Not Found 응답하기
         Optional<Board> boardOptional = boardService.findOne(id);
         if (boardOptional.isPresent()) {
             Board board = boardOptional.get();
@@ -131,7 +132,7 @@ public class BoardApiController {
         private String contents;
     }
 
-    // TODO: 2022-05-29 클래스명 변경 예정 
+    // TODO: 2022-05-29 클래스명 변경 예정
     @Data
     static class SelectBoardListResponse {
         private final String title;
