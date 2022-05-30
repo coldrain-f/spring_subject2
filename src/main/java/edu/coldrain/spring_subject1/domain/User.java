@@ -1,5 +1,6 @@
 package edu.coldrain.spring_subject1.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
@@ -14,20 +15,23 @@ import java.util.Set;
 @NoArgsConstructor
 public class User {
 
-    @Id
+
+    @JsonIgnore // JSON 에 포함 시키지 않음
     @Column(name = "user_id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
     @Column(name = "username", length = 50, unique = true)
     private String username;
 
+    @JsonIgnore // JSON 에 포함 시키지 않음
     @Column(name = "password", length = 100)
     private String password;
 
     @Column(name = "nickname", length = 50)
     private String nickname;
 
+    @JsonIgnore // JSON 에 포함 시키지 않음
     @Column(name = "activated")
     private boolean activated;
 

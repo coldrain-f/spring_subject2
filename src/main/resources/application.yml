@@ -28,5 +28,7 @@ logging:
 
 jwt:
   header: Authorization
+  #  HS512 알고리즘은 시크릿 키가 64Byte(512bit) 이상이어야 한다.
   secret: c2lsdmVybmluZS10ZWNoLXNwcmluZy1ib290LWp3dC10dXRvcmlhbC1zZWNyZXQtc2lsdmVybmluZS10ZWNoLXNwcmluZy1ib290LWp3dC10dXRvcmlhbC1zZWNyZXQK
+  # 토큰의 만료 시간 설정
   token-validity-in-seconds: 86400

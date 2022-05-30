@@ -22,7 +22,7 @@ public class CommentService {
     // 특정 게시글에 소속된 모든 댓글 목록
     public List<Comment> findAll(Long boardId) {
         // TODO: 2022-05-29 에러 발생
-        return commentRepository.findByBoardId(boardId);
+        return commentRepository.findAllByBoardId(boardId);
     }
 
     // 댓글 삭제

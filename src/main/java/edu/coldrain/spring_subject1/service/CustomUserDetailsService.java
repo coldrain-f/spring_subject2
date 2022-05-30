@@ -21,6 +21,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         this.userRepository = userRepository;
     }
 
+    //=============================================================
+    // 로그인시에 데이터베이스에서 유저정보와 권한정보를 가지고 온다.
+    // 가지고온 정보를 기반으로 UserDetails 객체를 생성해서 반환한다.
+    //==============================================================
     @Override
     @Transactional
     public UserDetails loadUserByUsername(final String username) {

@@ -1,19 +1,20 @@
 package edu.coldrain.spring_subject1.controller;
 
 import edu.coldrain.spring_subject1.domain.Board;
-import edu.coldrain.spring_subject1.exception.DuplicateBoardException;
-import edu.coldrain.spring_subject1.exception.DuplicateMemberException;
 import edu.coldrain.spring_subject1.service.BoardService;
+import edu.coldrain.spring_subject1.util.SecurityUtil;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.security.Principal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -27,16 +28,17 @@ public class BoardApiController {
      * 작성 날짜 기준으로 내림차순 정렬하기
      */
     @GetMapping("/api/boards")
-    public List<SelectBoardListResponse> viewAll() {
-        // TODO: 2022-05-29 전체적으로 점검 예정
-        List<Board> boards = boardService.findAll();
-        List<SelectBoardListResponse> responses = new ArrayList<>();
-        for (Board board : boards) {
-            SelectBoardListResponse response =
-                    new SelectBoardListResponse(board.getTitle(), board.getAuthor(), board.getCreatedAt());
-            responses.add(response);
-        }
-        return responses;
+    public ResponseEntity<Result> viewAll() {
+        List<BoardDetailListResponseDTO> responses = boardService.findAll()
+                .stream()
+                .map(b ->
+                        BoardDetailListResponseDTO.builder()
+                                .title(b.getTitle())
+                                .author(b.getAuthor())
+                                .createdAt(b.getCreatedAt())
+                                .build()
+                ).collect(Collectors.toList());
+        return ResponseEntity.ok(new Result(responses));
     }
 
     /**
@@ -44,17 +46,22 @@ public class BoardApiController {
      * 제목, 작성자명, 작성 날짜, 작성 내용을 조회하기
      */
     @GetMapping("/api/boards/{id}")
-    public ResponseEntity<SelectBoardResponse> viewDetail(@PathVariable Long id) {
-        // TODO: 2022-05-29 전체적으로 점검 예정
-        // TODO: 2022-05-29 해당하는 글이 없으면 404 Not Found 응답하기
-        Optional<Board> boardOptional = boardService.findOne(id);
-        if (boardOptional.isPresent()) {
-            Board board = boardOptional.get();
-            SelectBoardResponse response =
-                    new SelectBoardResponse(board.getTitle(), board.getAuthor(), board.getCreatedAt(), board.getContents());
-            return ResponseEntity.ok(response);
+    public ResponseEntity<BoardDetailResponseDTO> viewDetail(@PathVariable Long id) {
+        Board board;
+        try {
+            board = boardService.findOne(id)
+                    .orElseThrow(() -> new IllegalArgumentException("id is null"));
+        } catch (IllegalArgumentException e) {
+            // TODO: 2022-05-29 해당하는 글이 없으면 404 Not Found ? Bad Request?
+            return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.badRequest().build();
+        BoardDetailResponseDTO response = BoardDetailResponseDTO.builder()
+                .title(board.getTitle())
+                .author(board.getAuthor())
+                .createdAt(board.getCreatedAt())
+                .contents(board.getContents())
+                .build();
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -116,6 +123,14 @@ public class BoardApiController {
         return ResponseEntity.badRequest().body("The id does not exist.");
     }
 
+    // 이런식으로 List 를 한 번 감싸서 응답하면 확장하기 쉽다.
+    @AllArgsConstructor
+    @Data
+    static class Result {
+        // Getter 가 없으면 406 Status code 발생...
+        private List<BoardDetailListResponseDTO> data;
+    }
+
     @Data
     static class BoardCreateRequestDTO {
         private String title;
@@ -132,16 +147,17 @@ public class BoardApiController {
         private String contents;
     }
 
-    // TODO: 2022-05-29 클래스명 변경 예정
     @Data
-    static class SelectBoardListResponse {
+    @Builder
+    static class BoardDetailListResponseDTO {
         private final String title;
         private final String author;
         private final LocalDateTime createdAt;
     }
 
     @Data
-    static class SelectBoardResponse {
+    @Builder
+    static class BoardDetailResponseDTO {
         private final String title;
         private final String author;
         private final LocalDateTime createdAt;
