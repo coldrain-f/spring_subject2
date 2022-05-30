@@ -5,7 +5,10 @@ import edu.coldrain.spring_subject1.domain.Comment;
 import edu.coldrain.spring_subject1.service.BoardService;
 import edu.coldrain.spring_subject1.service.CommentService;
 import edu.coldrain.spring_subject1.util.SecurityUtil;
+import io.jsonwebtoken.Jwts;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class CommentApiController {
@@ -23,6 +27,21 @@ public class CommentApiController {
 
     private final CommentService commentService;
     private final BoardService boardService;
+
+    // TODO: 2022-05-30 헤더로 토큰 가져오기 테스트
+    @GetMapping("/api/header")
+    public ResponseEntity<String> header(@RequestHeader HttpHeaders httpHeaders) {
+        String authorization = httpHeaders.getFirst(HttpHeaders.AUTHORIZATION);
+        log.info("jwtToken = {}", authorization);
+        // TODO: 2022-05-30 헤더에 있는 JWT Token 을 복호화하여 payload 가져와 보기
+        // TODO: 2022-05-30 authentication 로 로그인 여부를 확인해야 하는지, 토큰의 payload 로 확인해야 하는지?
+//        Jwts.parserBuilder()
+//                .setSigningKey(key)
+//                .build()
+//                .parseClaimsJws(token)
+//                .getBody();
+        return ResponseEntity.ok(authorization);
+    }
 
     @GetMapping("/api/boards/{id}/comments")
     public ResponseEntity<Result> viewComments(@PathVariable Long id) {
@@ -45,9 +64,11 @@ public class CommentApiController {
         // TODO: 2022-05-29 로그인 토큰을 전달했을 때에만 댓글 작성이 가능하도록 하기
         // TODO: 2022-05-29 로그인 토큰을 전달하지 않은 채로 댓글 작성란을 누르면 "로그인이 필요한 기능입니다." 라는 에러 메세지를 응답에 포함하기
         Optional<String> currentUsername = SecurityUtil.getCurrentUsername();
-        if (currentUsername.isEmpty()) {
+        if (currentUsername.isPresent() && currentUsername.get().equals("anonymousUser")) {
             return ResponseEntity.badRequest().body("로그인이 필요한 기능입니다.");
         }
+        // TODO: 2022-05-30 삭제 예정 테스트 로그
+        currentUsername.ifPresent(c -> log.info("currentUsername = {}", c));
 
         // TODO: 2022-05-29 댓글 내용란을 비워둔 채 API 를 호출하면 "댓글 내용을 입력해주세요" 라는 에러 메세지를 응답에 포함하기
         if (!StringUtils.hasText(requestDTO.getContent())) {
