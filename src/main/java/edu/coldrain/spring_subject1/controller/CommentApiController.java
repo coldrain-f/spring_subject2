@@ -4,17 +4,22 @@ import edu.coldrain.spring_subject1.domain.Board;
 import edu.coldrain.spring_subject1.domain.Comment;
 import edu.coldrain.spring_subject1.service.BoardService;
 import edu.coldrain.spring_subject1.service.CommentService;
+import edu.coldrain.spring_subject1.util.SecurityUtil;
 import lombok.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
 public class CommentApiController {
+
+    private static final String ID_IS_NULL = "id is null";
 
     private final CommentService commentService;
     private final BoardService boardService;
@@ -39,9 +44,18 @@ public class CommentApiController {
     public ResponseEntity<String> createComment(@PathVariable Long id, @RequestBody CommentCreateRequestDTO requestDTO) {
         // TODO: 2022-05-29 로그인 토큰을 전달했을 때에만 댓글 작성이 가능하도록 하기
         // TODO: 2022-05-29 로그인 토큰을 전달하지 않은 채로 댓글 작성란을 누르면 "로그인이 필요한 기능입니다." 라는 에러 메세지를 응답에 포함하기
+        Optional<String> currentUsername = SecurityUtil.getCurrentUsername();
+        if (currentUsername.isEmpty()) {
+            return ResponseEntity.badRequest().body("로그인이 필요한 기능입니다.");
+        }
+
         // TODO: 2022-05-29 댓글 내용란을 비워둔 채 API 를 호출하면 "댓글 내용을 입력해주세요" 라는 에러 메세지를 응답에 포함하기
+        if (!StringUtils.hasText(requestDTO.getContent())) {
+            return ResponseEntity.badRequest().body("댓글 내용을 입력해주세요.");
+        }
+
         Board board = boardService.findOne(id) // 예외를 터트려도 되나?
-                .orElseThrow(() -> new IllegalArgumentException("id is null"));
+                .orElseThrow(() -> new IllegalArgumentException(ID_IS_NULL));
         Comment comment = Comment.builder()
                 .author(requestDTO.getAuthor())
                 .content(requestDTO.getContent())
@@ -56,9 +70,16 @@ public class CommentApiController {
     // 댓글 수정
     @PatchMapping("/api/comments/{id}")
     public ResponseEntity<String> modifyComment(@PathVariable Long id, @RequestBody CommentModifyRequestDTO requestDTO) {
-        // TODO: 2022-05-29 로그인 토큰에 해당하는 사용자가 작성한 댓글만 수정 가능하도록 하기
         Comment comment = commentService.findById(id) // 1차 캐시에 있음
-                .orElseThrow(() -> new IllegalArgumentException("id is null"));
+                .orElseThrow(() -> new IllegalArgumentException(ID_IS_NULL));
+        // TODO: 2022-05-29 로그인 토큰에 해당하는 사용자가 작성한 댓글만 수정 가능하도록 하기
+        Optional<String> currentUsername = SecurityUtil.getCurrentUsername();
+        if (currentUsername.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (!currentUsername.get().equals(comment.getAuthor())) {
+            return ResponseEntity.badRequest().build();
+        }
         comment.modify(requestDTO.getContent());
         return ResponseEntity.ok("success");
     }
@@ -67,6 +88,15 @@ public class CommentApiController {
     @DeleteMapping("/api/comments/{id}")
     public ResponseEntity<String> removeComment(@PathVariable Long id) {
         // TODO: 2022-05-29 로그인 토큰에 해당하는 사용자가 작성한 댓글만 삭제 가능하도록 하기
+        Optional<String> currentUsername = SecurityUtil.getCurrentUsername();
+        if (currentUsername.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        Comment comment = commentService.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(ID_IS_NULL));
+        if (!currentUsername.get().equals(comment.getAuthor())) {
+            return ResponseEntity.badRequest().build();
+        }
         commentService.remove(id);
         return ResponseEntity.ok("success");
     }
