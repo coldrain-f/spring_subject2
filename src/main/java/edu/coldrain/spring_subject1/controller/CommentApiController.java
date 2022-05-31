@@ -5,7 +5,6 @@ import edu.coldrain.spring_subject1.domain.Comment;
 import edu.coldrain.spring_subject1.service.BoardService;
 import edu.coldrain.spring_subject1.service.CommentService;
 import edu.coldrain.spring_subject1.util.SecurityUtil;
-import io.jsonwebtoken.Jwts;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -63,6 +62,9 @@ public class CommentApiController {
     public ResponseEntity<String> createComment(@PathVariable Long id, @RequestBody CommentCreateRequestDTO requestDTO) {
         // TODO: 2022-05-29 로그인 토큰을 전달했을 때에만 댓글 작성이 가능하도록 하기
         // TODO: 2022-05-29 로그인 토큰을 전달하지 않은 채로 댓글 작성란을 누르면 "로그인이 필요한 기능입니다." 라는 에러 메세지를 응답에 포함하기
+        // TODO: 질문 -> 토큰을 복호화 해서 확인? 시큐리티의 컨텍스트의 authentication 객체로 확인?
+        // TODO: 질문 -> 로그인 필요 응답을 해주러면 일단 시큐리티에서 api 접근 인증을 전부 열어주고 처리해야 하는지?
+        // TODO: 아니면... 401로 팅겨내야 하는지
         Optional<String> currentUsername = SecurityUtil.getCurrentUsername();
         if (currentUsername.isPresent() && currentUsername.get().equals("anonymousUser")) {
             return ResponseEntity.badRequest().body("로그인이 필요한 기능입니다.");
@@ -75,6 +77,7 @@ public class CommentApiController {
             return ResponseEntity.badRequest().body("댓글 내용을 입력해주세요.");
         }
 
+        // TODO: 2022-05-30 Exception catch 해서 badRequest 로 반환하도록 변경하기
         Board board = boardService.findOne(id) // 예외를 터트려도 되나?
                 .orElseThrow(() -> new IllegalArgumentException(ID_IS_NULL));
         Comment comment = Comment.builder()
