@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-// TODO: 2022-05-31 API 예외 처리 연습용
+// TODO: 2022-05-31 API 예외 처리 연습용 컨트롤러
 @Slf4j
 @RestController
 public class ApiExceptionController {

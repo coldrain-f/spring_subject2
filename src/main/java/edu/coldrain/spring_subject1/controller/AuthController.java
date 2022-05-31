@@ -4,7 +4,6 @@ import edu.coldrain.spring_subject1.dto.LoginDto;
 import edu.coldrain.spring_subject1.dto.TokenDto;
 import edu.coldrain.spring_subject1.jwt.JwtFilter;
 import edu.coldrain.spring_subject1.jwt.TokenProvider;
-import edu.coldrain.spring_subject1.util.SecurityUtil;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,20 +11,18 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
 public class AuthController {
     private final TokenProvider tokenProvider;
-    // TODO: 2022-05-30  AuthenticationManagerBuilder 가 무슨 역할을 하는지 알아보기
+    // TODO: 2022-05-30  AuthenticationManagerBuilder 가 무슨 역할을 하는지 자세히 알아보기
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
     public AuthController(TokenProvider tokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder) {

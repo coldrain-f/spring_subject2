@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-// TODO: 2022-05-31 API 예외 처리 연습용
+// TODO: 2022-05-31 API 예외 처리 연습용 컨트롤 어드바이스
 // @ControllerAdvice 는 대상으로 지정한 컨트롤러에 @ExceptionHandler, @InitBinder 기능을 부여해준다.
 // 대상을 지정하지 않으면 모든 컨트롤러에 적용된다.
 // @RestControllerAdvice 는 @ControllerAdvice + @ResponseBody 이다.

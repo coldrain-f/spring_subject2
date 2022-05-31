@@ -2,15 +2,15 @@ package edu.coldrain.spring_subject1.controller;
 
 import edu.coldrain.spring_subject1.domain.Board;
 import edu.coldrain.spring_subject1.domain.Comment;
-import edu.coldrain.spring_subject1.exhandler.ErrorResult;
+import edu.coldrain.spring_subject1.exception.AuthenticationException;
 import edu.coldrain.spring_subject1.service.BoardService;
 import edu.coldrain.spring_subject1.service.CommentService;
 import edu.coldrain.spring_subject1.util.SecurityUtil;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,25 +24,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CommentApiController {
 
-    private static final String ID_IS_NULL = "id is null";
-
     private final CommentService commentService;
     private final BoardService boardService;
-
-    // TODO: 2022-05-30 헤더로 토큰 가져오기 테스트
-    @GetMapping("/api/header")
-    public ResponseEntity<String> header(@RequestHeader HttpHeaders httpHeaders) {
-        String authorization = httpHeaders.getFirst(HttpHeaders.AUTHORIZATION);
-        log.info("jwtToken = {}", authorization);
-        // TODO: 2022-05-30 헤더에 있는 JWT Token 을 복호화하여 payload 가져와 보기
-        // TODO: 2022-05-30 authentication 로 로그인 여부를 확인해야 하는지, 토큰의 payload 로 확인해야 하는지?
-//        Jwts.parserBuilder()
-//                .setSigningKey(key)
-//                .build()
-//                .parseClaimsJws(token)
-//                .getBody();
-        return ResponseEntity.ok(authorization);
-    }
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/api/boards/{id}/comments")
@@ -61,84 +44,97 @@ public class CommentApiController {
     }
 
     @PostMapping("/api/boards/{id}/comments")
-    public ResponseEntity<String> createComment(@PathVariable Long id, @RequestBody CommentCreateRequestDTO requestDTO) {
-        // TODO: 2022-05-29 로그인 토큰을 전달했을 때에만 댓글 작성이 가능하도록 하기
-        // TODO: 2022-05-29 로그인 토큰을 전달하지 않은 채로 댓글 작성란을 누르면 "로그인이 필요한 기능입니다." 라는 에러 메세지를 응답에 포함하기
-        // TODO: 확인 -> authentication 을 시큐리티 컨텍스트에 저장할 때 token 을 확인하고 생성하는지 알아보기.
+    public ResponseEntity<RestResponse> createComment(@PathVariable Long id, @RequestBody CommentCreateRequestDTO requestDTO) {
         Optional<String> currentUsername = SecurityUtil.getCurrentUsername();
-        if (currentUsername.isPresent() && currentUsername.get().equals("anonymousUser")) {
-            return ResponseEntity.badRequest().body("로그인이 필요한 기능입니다.");
-        }
-        // TODO: 2022-05-30 삭제 예정 테스트 로그
         currentUsername.ifPresent(c -> log.info("currentUsername = {}", c));
+        if (currentUsername.isPresent() && currentUsername.get().equals("anonymousUser")) {
+            throw new AuthenticationException("로그인이 필요한 기능입니다.");
+        }
 
         // TODO: 2022-05-29 댓글 내용란을 비워둔 채 API 를 호출하면 "댓글 내용을 입력해주세요" 라는 에러 메세지를 응답에 포함하기
-        // TODO: 확인 -> 인터셉터로 Validation 코드들을 전부 분리할 수 있을까?
+        // TODO: 2022-06-01 -> Bean Validation 을 사용하여 ControllerAdvice 가 처리하도록 변경하기
         if (!StringUtils.hasText(requestDTO.getContent())) {
             throw new IllegalArgumentException("댓글 내용을 입력해주세요.");
         }
 
-        // TODO: 2022-05-30 Exception catch 해서 badRequest 로 반환하도록 변경하기
-        Board board = boardService.findOne(id) // 예외를 터트려도 되나?
-                .orElseThrow(() -> new IllegalArgumentException(ID_IS_NULL));
+        // 등록하려는 게시글의 id 값이 없으면 예외가 터진다.
+        Board board = boardService.findOne(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글 번호입니다."));
+
         Comment comment = Comment.builder()
                 .author(requestDTO.getAuthor())
                 .content(requestDTO.getContent())
                 .board(board)
                 .build();
+
         commentService.write(comment);
 
-        String location = "/api/boards" + id + "/comments/" + comment.getId();
-        return ResponseEntity.created(URI.create(location)).build();
+        // TODO: 2022-06-01 특정 게시글의 특정 댓글 조회 API 는 현재 존재하지 않음
+        String location = "/api/boards/" + id + "/comments/" + comment.getId();
+
+        return ResponseEntity.created(URI.create(location))
+                .body(new RestResponse(true, "댓글 등록에 성공했습니다.", location));
     }
 
-    // 댓글 수정
+    @Transactional
     @PatchMapping("/api/comments/{id}")
-    public ResponseEntity<String> modifyComment(@PathVariable Long id, @RequestBody CommentModifyRequestDTO requestDTO) {
+    public ResponseEntity<RestResponse> modifyComment(@PathVariable Long id, @RequestBody CommentModifyRequestDTO requestDTO) {
         Comment comment = commentService.findById(id) // 1차 캐시에 있음
-                .orElseThrow(() -> new IllegalArgumentException(ID_IS_NULL));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글 번호입니다."));
+
         // TODO: 2022-05-29 로그인 토큰에 해당하는 사용자가 작성한 댓글만 수정 가능하도록 하기
         Optional<String> currentUsername = SecurityUtil.getCurrentUsername();
         if (currentUsername.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
         if (!currentUsername.get().equals(comment.getAuthor())) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest()
+                    .body(new RestResponse(false, "본인의 댓글만 수정할 수 있습니다."));
         }
+
         comment.modify(requestDTO.getContent());
-        return ResponseEntity.ok("success");
+
+        return ResponseEntity.ok(new RestResponse(true, "댓글 수정에 성공했습니다."));
     }
 
     // 댓글 삭제
     @DeleteMapping("/api/comments/{id}")
-    public ResponseEntity<String> removeComment(@PathVariable Long id) {
+    public ResponseEntity<RestResponse> removeComment(@PathVariable Long id) {
+        Comment comment = commentService.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글 번호입니다."));
+
         // TODO: 2022-05-29 로그인 토큰에 해당하는 사용자가 작성한 댓글만 삭제 가능하도록 하기
         Optional<String> currentUsername = SecurityUtil.getCurrentUsername();
         if (currentUsername.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        Comment comment = commentService.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException(ID_IS_NULL));
         if (!currentUsername.get().equals(comment.getAuthor())) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest()
+                    .body(new RestResponse(false, "본인의 댓글만 삭제할 수 있습니다."));
         }
+
         commentService.remove(id);
-        return ResponseEntity.ok("success");
+        return ResponseEntity.ok(new RestResponse(true, "댓글 삭제에 성공했습니다."));
     }
-
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler
-    public ErrorResult illegalArgumentExceptionHandler(IllegalArgumentException e) {
-        log.error("[exceptionHandler] ex", e);
-        return new ErrorResult(HttpStatus.BAD_REQUEST.getReasonPhrase(), e.getMessage());
-    }
-
 
     // 이런식으로 List 를 한 번 감싸서 응답하면 확장하기 쉽다.
     @AllArgsConstructor
-    @Getter // 없으면 406..
+    @Getter // 없는 상태로 JSON 반환시 406 에러 발생.
     static class Result {
         private List<CommentListResponseDTO> data;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    static class RestResponse {
+        private boolean success;
+        private String message;
+        private Object data;
+
+        public RestResponse(boolean success, String message) {
+            this.success = success;
+            this.message = message;
+        }
     }
 
     @Data

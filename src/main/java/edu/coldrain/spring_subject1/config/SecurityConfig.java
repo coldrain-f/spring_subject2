@@ -6,6 +6,7 @@ import edu.coldrain.spring_subject1.jwt.JwtAuthenticationEntryPoint;
 import edu.coldrain.spring_subject1.jwt.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
@@ -108,6 +109,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // JwtFilter 를 addFilterBefore 로 등록했던 JwtSecurityConfig 클래스 적용
                 .and()
                 .apply(new JwtSecurityConfig(tokenProvider));
+
                 //===================================================
     }
 }
