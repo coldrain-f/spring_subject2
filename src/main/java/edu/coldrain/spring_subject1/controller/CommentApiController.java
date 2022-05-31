@@ -2,12 +2,14 @@ package edu.coldrain.spring_subject1.controller;
 
 import edu.coldrain.spring_subject1.domain.Board;
 import edu.coldrain.spring_subject1.domain.Comment;
+import edu.coldrain.spring_subject1.exhandler.ErrorResult;
 import edu.coldrain.spring_subject1.service.BoardService;
 import edu.coldrain.spring_subject1.service.CommentService;
 import edu.coldrain.spring_subject1.util.SecurityUtil;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -42,8 +44,9 @@ public class CommentApiController {
         return ResponseEntity.ok(authorization);
     }
 
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("/api/boards/{id}/comments")
-    public ResponseEntity<Result> viewComments(@PathVariable Long id) {
+    public Result viewComments(@PathVariable Long id) {
         // TODO: 2022-05-29 로그인 토큰을 전달하지 않아도 댓글 목록 조회가 가능하도록 하기
         List<CommentListResponseDTO> responses = commentService.findAll(id)
                 .stream()
@@ -54,17 +57,14 @@ public class CommentApiController {
                                 .content(comment.getContent())
                                 .build()
                 ).collect(Collectors.toList());
-        return ResponseEntity.ok(new Result(responses));
+        return new Result(responses);
     }
 
-    // 댓글 작성
     @PostMapping("/api/boards/{id}/comments")
     public ResponseEntity<String> createComment(@PathVariable Long id, @RequestBody CommentCreateRequestDTO requestDTO) {
         // TODO: 2022-05-29 로그인 토큰을 전달했을 때에만 댓글 작성이 가능하도록 하기
         // TODO: 2022-05-29 로그인 토큰을 전달하지 않은 채로 댓글 작성란을 누르면 "로그인이 필요한 기능입니다." 라는 에러 메세지를 응답에 포함하기
-        // TODO: 질문 -> 토큰을 복호화 해서 확인? 시큐리티의 컨텍스트의 authentication 객체로 확인?
-        // TODO: 질문 -> 로그인 필요 응답을 해주러면 일단 시큐리티에서 api 접근 인증을 전부 열어주고 처리해야 하는지?
-        // TODO: 아니면... 401로 팅겨내야 하는지
+        // TODO: 확인 -> authentication 을 시큐리티 컨텍스트에 저장할 때 token 을 확인하고 생성하는지 알아보기.
         Optional<String> currentUsername = SecurityUtil.getCurrentUsername();
         if (currentUsername.isPresent() && currentUsername.get().equals("anonymousUser")) {
             return ResponseEntity.badRequest().body("로그인이 필요한 기능입니다.");
@@ -73,8 +73,9 @@ public class CommentApiController {
         currentUsername.ifPresent(c -> log.info("currentUsername = {}", c));
 
         // TODO: 2022-05-29 댓글 내용란을 비워둔 채 API 를 호출하면 "댓글 내용을 입력해주세요" 라는 에러 메세지를 응답에 포함하기
+        // TODO: 확인 -> 인터셉터로 Validation 코드들을 전부 분리할 수 있을까?
         if (!StringUtils.hasText(requestDTO.getContent())) {
-            return ResponseEntity.badRequest().body("댓글 내용을 입력해주세요.");
+            throw new IllegalArgumentException("댓글 내용을 입력해주세요.");
         }
 
         // TODO: 2022-05-30 Exception catch 해서 badRequest 로 반환하도록 변경하기
@@ -123,6 +124,13 @@ public class CommentApiController {
         }
         commentService.remove(id);
         return ResponseEntity.ok("success");
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler
+    public ErrorResult illegalArgumentExceptionHandler(IllegalArgumentException e) {
+        log.error("[exceptionHandler] ex", e);
+        return new ErrorResult(HttpStatus.BAD_REQUEST.getReasonPhrase(), e.getMessage());
     }
 
 
