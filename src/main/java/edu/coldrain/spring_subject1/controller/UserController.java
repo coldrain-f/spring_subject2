@@ -26,12 +26,14 @@ public class UserController {
 
     private final UserService userService;
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler
     public ErrorResult methodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e) {
         return new ErrorResult(HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 e.getBindingResult().getAllErrors().get(0).getDefaultMessage());
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler
     public ErrorResult illegalArgumentExceptionHandler(IllegalArgumentException e) {
         return new ErrorResult(HttpStatus.BAD_REQUEST.getReasonPhrase(), e.getMessage());
