@@ -3,6 +3,7 @@ package edu.coldrain.spring_subject1.controller;
 import edu.coldrain.spring_subject1.domain.Board;
 import edu.coldrain.spring_subject1.domain.Comment;
 import edu.coldrain.spring_subject1.exception.AuthenticationException;
+import edu.coldrain.spring_subject1.exhandler.ErrorResult;
 import edu.coldrain.spring_subject1.service.BoardService;
 import edu.coldrain.spring_subject1.service.CommentService;
 import edu.coldrain.spring_subject1.util.SecurityUtil;
@@ -12,8 +13,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
@@ -44,7 +49,7 @@ public class CommentApiController {
     }
 
     @PostMapping("/api/boards/{id}/comments")
-    public ResponseEntity<RestResponse> createComment(@PathVariable Long id, @RequestBody CommentCreateRequestDTO requestDTO) {
+    public ResponseEntity<RestResponse> createComment(@PathVariable Long id, @RequestBody @Valid CommentCreateRequestDTO requestDTO) {
         Optional<String> currentUsername = SecurityUtil.getCurrentUsername();
         currentUsername.ifPresent(c -> log.info("currentUsername = {}", c));
         if (currentUsername.isPresent() && currentUsername.get().equals("anonymousUser")) {
@@ -52,12 +57,9 @@ public class CommentApiController {
         }
 
         // TODO: 2022-05-29 댓글 내용란을 비워둔 채 API 를 호출하면 "댓글 내용을 입력해주세요" 라는 에러 메세지를 응답에 포함하기
-        // TODO: 2022-06-01 -> Bean Validation 을 사용하여 ControllerAdvice 가 처리하도록 변경하기
-        if (!StringUtils.hasText(requestDTO.getContent())) {
-            throw new IllegalArgumentException("댓글 내용을 입력해주세요.");
-        }
+        // TODO: 2022-06-01 -> Bean Validation + RestControllerAdvice 로 처리
 
-        // 등록하려는 게시글의 id 값이 없으면 예외가 터진다.
+        // 등록하려는 게시글의 id 값이 없으면 예외가 터진다. 그럼.. 404?
         Board board = boardService.findOne(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글 번호입니다."));
 
@@ -140,6 +142,7 @@ public class CommentApiController {
     @Data
     static class CommentCreateRequestDTO {
         private String author;
+        @NotBlank(message = "댓글 내용을 입력해주세요")
         private String content;
     }
 

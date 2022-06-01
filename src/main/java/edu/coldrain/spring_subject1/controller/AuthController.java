@@ -1,9 +1,14 @@
 package edu.coldrain.spring_subject1.controller;
 
+import edu.coldrain.spring_subject1.domain.User;
 import edu.coldrain.spring_subject1.dto.LoginDto;
 import edu.coldrain.spring_subject1.dto.TokenDto;
+import edu.coldrain.spring_subject1.exhandler.ErrorResult;
 import edu.coldrain.spring_subject1.jwt.JwtFilter;
 import edu.coldrain.spring_subject1.jwt.TokenProvider;
+import edu.coldrain.spring_subject1.service.UserService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,27 +16,53 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.Errors;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Optional;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
+@RequiredArgsConstructor
 public class AuthController {
+
     private final TokenProvider tokenProvider;
+
+    private final UserService userService;
+
+    private final PasswordEncoder passwordEncoder;
+
     // TODO: 2022-05-30  AuthenticationManagerBuilder 가 무슨 역할을 하는지 자세히 알아보기
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
-    public AuthController(TokenProvider tokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder) {
-        this.tokenProvider = tokenProvider;
-        this.authenticationManagerBuilder = authenticationManagerBuilder;
+    @ExceptionHandler
+    public ErrorResult illegalArgumentException(IllegalArgumentException e) {
+        return new ErrorResult(HttpStatus.BAD_REQUEST.getReasonPhrase(), e.getMessage());
     }
 
     @PostMapping("/authenticate")
-    public ResponseEntity<TokenDto> authorize(@Valid @RequestBody LoginDto loginDto) {
+    public ResponseEntity<TokenDto> authorize(@RequestBody @Valid LoginDto loginDto) {
+        // TODO: 2022-06-01 Validator 로 검증로직 분리 예정
+        //====================================================================
+        String username = loginDto.getUsername();
+        String password = loginDto.getPassword();
+
+        Optional<User> found = userService.findByUsername(username);
+        if (found.isEmpty()) {
+            throw new IllegalArgumentException("닉네임 또는 패스워드를 확인해주세요.");
+        }
+
+        // 꼭! matches 로 비교해야 함! ( 직접 암호화하여 비교 X )
+        if (!passwordEncoder.matches(password, found.get().getPassword())) {
+            throw new IllegalArgumentException("닉네임 또는 패스워드를 확인해주세요.");
+        }
+        //====================================================================
 
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword());

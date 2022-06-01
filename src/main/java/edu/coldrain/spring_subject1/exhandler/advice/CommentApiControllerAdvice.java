@@ -5,6 +5,7 @@ import edu.coldrain.spring_subject1.exception.AuthenticationException;
 import edu.coldrain.spring_subject1.exhandler.ErrorResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -18,7 +19,14 @@ public class CommentApiControllerAdvice {
     }
 
     @ExceptionHandler
-    public ErrorResult authenticationException(AuthenticationException e) {
+    public ErrorResult authenticationExceptionHandler(AuthenticationException e) {
         return new ErrorResult(HttpStatus.UNAUTHORIZED.getReasonPhrase(), e.getMessage());
+    }
+
+    // Bean Validation Exception 처리
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ErrorResult methodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e) {
+        return new ErrorResult((HttpStatus.BAD_REQUEST.getReasonPhrase()),
+                e.getBindingResult().getAllErrors().get(0).getDefaultMessage());
     }
 }

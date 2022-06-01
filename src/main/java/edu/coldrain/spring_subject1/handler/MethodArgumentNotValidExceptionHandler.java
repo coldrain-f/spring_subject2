@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@Order(Ordered.HIGHEST_PRECEDENCE)
-@ControllerAdvice
+//@Order(Ordered.HIGHEST_PRECEDENCE)
+//@ControllerAdvice
 public class MethodArgumentNotValidExceptionHandler {
 
     @ResponseStatus(BAD_REQUEST)

@@ -1,12 +1,15 @@
 package edu.coldrain.spring_subject1.controller;
 
 import edu.coldrain.spring_subject1.dto.UserDto;
+import edu.coldrain.spring_subject1.exhandler.ErrorResult;
 import edu.coldrain.spring_subject1.repository.UserRepository;
 import edu.coldrain.spring_subject1.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,11 +21,39 @@ import javax.validation.Valid;
 public class UserController {
 
     private final UserService userService;
-    private final UserRepository userRepository;
+
+    @ExceptionHandler
+    public ErrorResult methodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e) {
+        return new ErrorResult(HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                e.getBindingResult().getAllErrors().get(0).getDefaultMessage());
+    }
+
+    @ExceptionHandler
+    public ErrorResult illegalArgumentExceptionHandler(IllegalArgumentException e) {
+        return new ErrorResult(HttpStatus.BAD_REQUEST.getReasonPhrase(), e.getMessage());
+    }
 
     @PostMapping("/signup")
-    public ResponseEntity<UserDto> signup(@Valid @RequestBody UserDto userDto, BindingResult bindingResult) {
-        // TODO: 2022-06-01 회원가입 Validation 싹 갈아엎었음. ( 새로 구현 예정 )
+    public ResponseEntity<UserDto> signup(@Valid @RequestBody UserDto userDto) {
+        // TODO: 2022-06-01 Validator 로 검증 로직 분리 예정
+        //===========================================================================
+        String username = userDto.getUsername();
+        String password = userDto.getPassword();
+        String confirmPassword = userDto.getConfirmPassword();
+
+        if (password.contains(username)) {
+            throw new IllegalArgumentException("비밀번호는 닉네임이 포함될 수 없습니다.");
+        }
+
+        if (!password.equals(confirmPassword)) {
+            throw new IllegalArgumentException("비밀번호와 비밀번호 확인은 정확히 일치해야 합니다.");
+        }
+
+        if (userService.findByUsername(username).isPresent()) {
+            throw new IllegalArgumentException("중복된 닉네임입니다.");
+        }
+        //===========================================================================
+
         UserDto user = userService.signup(userDto);
         return ResponseEntity.ok(user);
     }

@@ -3,6 +3,7 @@ package edu.coldrain.spring_subject1.dto;
 import lombok.*;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 @Getter
@@ -17,6 +18,6 @@ public class LoginDto {
     private String username;
 
     @NotNull
-    @Size(min = 3, max = 100)
+    @Size(min = 4, max = 100)
     private String password;
 }
