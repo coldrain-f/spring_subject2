@@ -7,8 +7,10 @@ import edu.coldrain.spring_subject1.exhandler.ErrorResult;
 import edu.coldrain.spring_subject1.service.BoardService;
 import edu.coldrain.spring_subject1.service.CommentService;
 import edu.coldrain.spring_subject1.util.SecurityUtil;
+import io.jsonwebtoken.Jwts;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import java.net.URI;

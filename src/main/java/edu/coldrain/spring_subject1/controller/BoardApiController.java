@@ -34,6 +34,7 @@ public class BoardApiController {
                 .stream()
                 .map(b ->
                         BoardDetailListResponseDTO.builder()
+                                .id(b.getId())
                                 .title(b.getTitle())
                                 .author(b.getAuthor())
                                 .createdAt(b.getCreatedAt())
@@ -112,11 +113,8 @@ public class BoardApiController {
      * API 를 호출할 때 입력된 비밀번호를 비교하여 동일할 때만 글이 삭제되게 하기
      */
     @DeleteMapping("/api/boards/{id}")
-    public ResponseEntity<String> remove(@PathVariable Long id, @RequestBody String password) {
-        // id 값이 NULL 인 경우에는 IllegalArgumentException 발생
-        // Exception 이 발생하지 않도록 하는 방법은 없나? -> BindingResult 사용?
-        // 애초에 요청시 null 을 보낼 수 있기는 한가?
-        boolean isRemove = boardService.remove(id, password);
+    public ResponseEntity<String> remove(@PathVariable Long id, @RequestBody BoardDeleteRequestDTO requestDTO) {
+        boolean isRemove = boardService.remove(id, requestDTO.getPassword());
         if (isRemove) {
             return ResponseEntity.ok("success");
         }
@@ -151,6 +149,7 @@ public class BoardApiController {
     @Data
     @Builder
     static class BoardDetailListResponseDTO {
+        private final Long id;
         private final String title;
         private final String author;
         private final LocalDateTime createdAt;
@@ -163,5 +162,10 @@ public class BoardApiController {
         private final String author;
         private final LocalDateTime createdAt;
         private final String contents;
+    }
+
+    @Data
+    static class BoardDeleteRequestDTO {
+        private String password;
     }
 }

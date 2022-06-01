@@ -3,6 +3,8 @@ package edu.coldrain.spring_subject1.domain;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter @Setter
@@ -22,6 +24,9 @@ public class Board extends Timestamped {
 
     @Lob
     private String contents;
+
+    @OneToMany(mappedBy = "board", cascade = CascadeType.REMOVE)
+    private List<Comment> comments = new ArrayList<>();
 
     @Builder
     public Board(String title, String author, String password, String contents) {
