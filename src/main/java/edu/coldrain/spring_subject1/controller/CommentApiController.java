@@ -51,7 +51,6 @@ public class CommentApiController {
     @PostMapping("/api/boards/{id}/comments")
     public ResponseEntity<RestResponse> createComment(@PathVariable Long id, @RequestBody @Valid CommentCreateRequestDTO requestDTO) {
         Optional<String> currentUsername = SecurityUtil.getCurrentUsername();
-        currentUsername.ifPresent(c -> log.info("currentUsername = {}", c));
         if (currentUsername.isPresent() && currentUsername.get().equals("anonymousUser")) {
             throw new AuthenticationException("로그인이 필요한 기능입니다.");
         }

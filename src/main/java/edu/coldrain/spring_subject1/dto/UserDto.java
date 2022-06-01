@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserDto {
-
+    
     @NotNull
     @Length(min = 3, message = "닉네임은 최소 3자 이상이어야 합니다.")
     @Pattern(regexp = "^[a-zA-Z0-9]+$", message = "유효하지 않은 닉네임입니다.")

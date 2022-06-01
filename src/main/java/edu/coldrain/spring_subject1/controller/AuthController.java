@@ -3,10 +3,12 @@ package edu.coldrain.spring_subject1.controller;
 import edu.coldrain.spring_subject1.domain.User;
 import edu.coldrain.spring_subject1.dto.LoginDto;
 import edu.coldrain.spring_subject1.dto.TokenDto;
+import edu.coldrain.spring_subject1.exception.AuthenticationException;
 import edu.coldrain.spring_subject1.exhandler.ErrorResult;
 import edu.coldrain.spring_subject1.jwt.JwtFilter;
 import edu.coldrain.spring_subject1.jwt.TokenProvider;
 import edu.coldrain.spring_subject1.service.UserService;
+import edu.coldrain.spring_subject1.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -52,6 +54,11 @@ public class AuthController {
         //====================================================================
         String username = loginDto.getUsername();
         String password = loginDto.getPassword();
+
+        Optional<String> currentUsername = SecurityUtil.getCurrentUsername();
+        if (currentUsername.isPresent() && !currentUsername.get().equals("anonymousUser")) {
+            throw new IllegalArgumentException("이미 로그인이 되어있습니다.");
+        }
 
         Optional<User> found = userService.findByUsername(username);
         if (found.isEmpty()) {
